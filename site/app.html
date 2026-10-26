@@ -129,6 +129,8 @@ details.catalog > summary { cursor: pointer; font-weight: 700; padding: 4px 0; }
 /* 顧問 */
 .chat { display: flex; flex-direction: column; gap: 10px; position: sticky; top: calc(env(safe-area-inset-top, 0px) + 12px); max-height: calc(100vh - 40px); }
 @media (max-width: 1180px) { .chat { position: static; max-height: none; } }
+.api-settings { border-top: 1px solid var(--line); padding-top: 8px; font-size: 0.88rem; }
+.api-settings summary { cursor: pointer; color: var(--accent); margin-bottom: 8px; }
 .chat-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; }
 .chat-head h2 { margin: 0; }
 .chat-head-acts { display: flex; gap: 6px; }
@@ -323,6 +325,29 @@ details.catalog > summary { cursor: pointer; font-weight: 700; padding: 4px 0; }
           <button class="btn" type="submit" id="chat-send">送出</button>
         </div>
       </form>
+      <details class="api-settings" id="api-settings" hidden>
+        <summary>API 金鑰設定</summary>
+        <div class="fields">
+          <p class="hint">自架版的顧問使用你自己的 Anthropic API 金鑰，費用由你的帳號支付。金鑰只存在這個瀏覽器，不會上傳到網站或 GitHub。不要在共用電腦上儲存，並建議在 Anthropic Console 設定用量上限。</p>
+          <div>
+            <label for="api-key">API 金鑰</label>
+            <input type="password" id="api-key" autocomplete="off" spellcheck="false" placeholder="sk-ant-…">
+          </div>
+          <div>
+            <label for="api-model">模型</label>
+            <select id="api-model">
+              <option value="claude-opus-5-5">Claude Opus 5.5（預設，最準）</option>
+              <option value="claude-sonnet-5-5">Claude Sonnet 5.5（較便宜）</option>
+              <option value="claude-haiku-5-5">Claude Haiku 5.5（最便宜、最快）</option>
+            </select>
+          </div>
+          <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center">
+            <button class="btn" type="button" id="api-save">儲存</button>
+            <button class="btn ghost" type="button" id="api-clear">刪除金鑰</button>
+            <span class="hint" id="api-key-state"></span>
+          </div>
+        </div>
+      </details>
     </section>
   </div>
 </div>
@@ -627,7 +652,7 @@ details.catalog > summary { cursor: pointer; font-weight: 700; padding: 4px 0; }
     }
     e.target.value = ''; renderPhotos();
   });
-  let turns = [], ctl = null, sample = null;
+  let turns = [], ctl = null, sample = null, modeLabel = '正在連線顧問…';
 
   // ---- 對話歷史（只存在這個瀏覽器）----
   const CHAT_KEY = 'boxplan.chats', MAX_CHATS = 30;
@@ -718,6 +743,8 @@ details.catalog > summary { cursor: pointer; font-weight: 700; padding: 4px 0; }
     sampling_disabled: '這個帳號目前無法使用 Claude。', rate_limited: '使用太頻繁或已達用量上限，請稍後再試。',
     session_expired: '登入已過期，請重新登入 claude.ai。', refused: 'Claude 無法回答這個問題，換個說法試試。',
     prompt_too_large: '對話太長了，請重新整理頁面開始新對話。', tools_unavailable: '這個檢視無法讓顧問操作計算工具。',
+    bad_key: 'API 金鑰無效或已停用，請到「API 金鑰設定」重新貼上。', no_permission: '這把金鑰沒有使用所選模型的權限，請換一個模型或檢查帳號。',
+    bad_request: '請求格式被 API 拒絕，請開新對話再試一次。', network: '連不上 Anthropic API，請檢查網路。',
   };
   function brief(s) {
     return { 方案: s.label, 地面填滿: Math.round(s.floorFill * 100) + '%', 體積: Math.round(s.volumeFill * 100) + '%', 件數: s.count,
@@ -794,14 +821,14 @@ details.catalog > summary { cursor: pointer; font-weight: 700; padding: 4px 0; }
   const SUGGEST = ['衣櫃抽屜內寬 57、深 30、高 15，要放襪子和內衣', '層架一格 38×30×25，想放 A4 文件', '洗手台下 80×50×55，預算 1500，放清潔用品'];
   SUGGEST.forEach((t) => $('suggest').append(chip(t, () => { $('chat-in').value = t; $('chat-in').focus(); })));
 
-  function setBusy(b) { $('chat-send').disabled = b; $('chat-stop').hidden = !b; $('chat-state').textContent = b ? '思考中…' : '使用你自己的 Claude 額度'; }
+  function setBusy(b) { $('chat-send').disabled = b || !sample; $('chat-stop').hidden = !b; $('chat-state').textContent = b ? '思考中…' : modeLabel; }
   $('chat-stop').onclick = () => ctl?.abort();
   $('chat-in').addEventListener('keydown', (e) => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) $('chat-form').requestSubmit(); });
   $('chat-form').addEventListener('submit', async (e) => {
     e.preventDefault();
     const typed = $('chat-in').value.trim();
     if (!typed && !photos.length) return;
-    if (!sample) { addMsg('err', '這個檢視無法連到 Claude。計算與商品目錄仍可使用。'); return; }
+    if (!sample) { addMsg('err', '顧問尚未連線：請在 claude.ai 開啟此頁，或在下方「API 金鑰設定」貼上金鑰。計算與商品目錄仍可使用。'); return; }
     const sent = photos; photos = []; renderPhotos();
     const text = (typed || '請評估這個空間的收納狀況並給建議。') + (sent.length ? `\n（附上 ${sent.length} 張照片）` : '');
     $('chat-in').value = ''; $('suggest').hidden = true;
@@ -836,12 +863,128 @@ details.catalog > summary { cursor: pointer; font-weight: 700; padding: 4px 0; }
   });
   setBusy(false);
   startChat();
+  // ---- 自架模式：用使用者自己的 Anthropic API 金鑰（只存在這個瀏覽器）----
+  const SDK_URL = 'https://cdn.jsdelivr.net/npm/@anthropic-ai/sdk@0.110.0/+esm';
+  const KEY_STORE = 'boxplan.apiKey', MODEL_STORE = 'boxplan.model';
+  // 安全分類器拒絕時由伺服器改用其他模型接手（Haiku 5.5 沒有這個機制）
+  const FALLBACK_MODELS = new Set(['claude-opus-5-5', 'claude-sonnet-5-5']);
+  const API_PHOTO_LIMITS = { maxCount: 4, maxInputBytes: 20 * 1024 * 1024, mediaTypes: ['image/jpeg', 'image/png', 'image/webp', 'image/gif'] };
+  const lsGet = (k) => { try { return localStorage.getItem(k) || ''; } catch { return ''; } };
+  const lsSet = (k, v) => { try { v ? localStorage.setItem(k, v) : localStorage.removeItem(k); } catch {} };
+
+  // 照片縮到長邊 1568px 再轉 base64，送出較快也較省 token
+  async function imageBlock(file) {
+    const bmp = await createImageBitmap(file);
+    const scale = Math.min(1, 1568 / Math.max(bmp.width, bmp.height));
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.round(bmp.width * scale); canvas.height = Math.round(bmp.height * scale);
+    canvas.getContext('2d').drawImage(bmp, 0, 0, canvas.width, canvas.height);
+    const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+    return { type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: dataUrl.slice(dataUrl.indexOf(',') + 1) } };
+  }
+
+  // 與 claude.ai 的 sample() 同樣的呼叫方式與錯誤格式，送出流程不必分兩套
+  async function makeApiSample(apiKey, model) {
+    const { default: Anthropic } = await import(SDK_URL);
+    const client = new Anthropic({ apiKey, dangerouslyAllowBrowser: true });
+    const fn = async (input, { signal, tools = [], images, onText } = {}) => {
+      const [rules, ...history] = input;
+      const messages = history.map((m) => ({ role: m.role, content: m.content }));
+      if (images?.length) {
+        const lastMsg = messages[messages.length - 1];
+        lastMsg.content = [...await Promise.all([...images].map(imageBlock)), { type: 'text', text: lastMsg.content }];
+      }
+      const apiTools = tools.map((t) => ({ name: t.name, description: t.description, input_schema: t.inputSchema || { type: 'object', properties: {} }, eager_input_streaming: true }));
+      let text = '';
+      try {
+        for (let round = 0; round < 8; round++) {
+          const prefix = text ? text + '\n\n' : '';
+          const stream = client.beta.messages.stream({
+            model, max_tokens: 16000, system: rules.content, messages, tools: apiTools,
+            output_config: { effort: 'medium' },
+            ...(FALLBACK_MODELS.has(model) ? { betas: ['server-side-fallback-2026-07-01'], fallbacks: 'default' } : {}),
+          }, { signal });
+          let roundText = '';
+          stream.on('text', (delta) => { roundText += delta; onText?.({ text: prefix + roundText, delta }); });
+          const msg = await stream.finalMessage();
+          if (roundText) text = prefix + roundText;
+          if (msg.stop_reason === 'refusal') { const e = { code: 'refused', message: 'refusal' }; throw e; }
+          if (msg.stop_reason === 'pause_turn') { messages.push({ role: 'assistant', content: msg.content }); continue; }
+          const uses = msg.content.filter((b) => b.type === 'tool_use');
+          if (!uses.length) return { text: text || '（沒有回答）', truncated: msg.stop_reason === 'max_tokens' };
+          if (msg.stop_reason === 'max_tokens') return { text, truncated: true };
+          messages.push({ role: 'assistant', content: msg.content });
+          const results = await Promise.all(uses.map(async (u) => {
+            const tool = tools.find((t) => t.name === u.name);
+            const inputOk = u.input && typeof u.input === 'object' && !Array.isArray(u.input);
+            if (!tool || !inputOk) return { type: 'tool_result', tool_use_id: u.id, is_error: true, content: tool ? '參數格式錯誤，請重新呼叫' : '沒有這個工具' };
+            try {
+              const out = await tool.execute(u.input, { signal });
+              return { type: 'tool_result', tool_use_id: u.id, content: typeof out === 'string' ? out : JSON.stringify(out) };
+            } catch (err) {
+              return { type: 'tool_result', tool_use_id: u.id, is_error: true, content: 'Error: ' + (err?.message || String(err)) };
+            }
+          }));
+          messages.push({ role: 'user', content: results });
+        }
+        return { text: text || '（工具呼叫次數過多，請把問題拆小一點）', truncated: true };
+      } catch (err) {
+        if (err?.code && !(err instanceof Anthropic.APIError)) throw { ...err, text: text || undefined };
+        const partial = text || undefined;
+        if (err instanceof Anthropic.APIUserAbortError || signal?.aborted) throw { code: 'cancelled', text: partial };
+        if (err instanceof Anthropic.AuthenticationError) throw { code: 'bad_key', text: partial };
+        if (err instanceof Anthropic.PermissionDeniedError) throw { code: 'no_permission', text: partial };
+        if (err instanceof Anthropic.RateLimitError) throw { code: 'rate_limited', text: partial };
+        if (err instanceof Anthropic.BadRequestError) throw { code: 'bad_request', message: err.message, text: partial };
+        if (err instanceof Anthropic.APIConnectionError) throw { code: 'network', text: partial };
+        throw { code: 'upstream_error', message: err?.message, text: partial };
+      }
+    };
+    fn.limits = async () => ({ images: API_PHOTO_LIMITS, tools: { maxCount: 16 } });
+    return fn;
+  }
+
+  function setChatReady(ready, label) {
+    modeLabel = label;
+    $('chat-state').textContent = label;
+    $('chat-send').disabled = !ready;
+  }
+  async function enableApiMode() {
+    const key = lsGet(KEY_STORE).trim(), model = lsGet(MODEL_STORE) || 'claude-opus-5-5';
+    $('api-model').value = model;
+    $('api-key-state').textContent = key ? `已儲存金鑰（結尾 …${key.slice(-4)}）` : '尚未設定金鑰';
+    if (!key) { sample = null; $('photo-btn').hidden = true; setChatReady(false, '請先在下方「API 金鑰設定」貼上金鑰'); $('api-settings').open = true; return; }
+    try {
+      sample = await makeApiSample(key, model);
+    } catch {
+      sample = null; setChatReady(false, '無法載入 Anthropic SDK，請檢查網路後重新整理'); return;
+    }
+    photoLimits = API_PHOTO_LIMITS;
+    $('photo-btn').hidden = false; $('photo-in').accept = API_PHOTO_LIMITS.mediaTypes.join(',');
+    setChatReady(true, `使用你的 API 金鑰・${$('api-model').selectedOptions[0].textContent}`);
+  }
+  $('api-save').onclick = () => {
+    const v = $('api-key').value.trim();
+    if (v) lsSet(KEY_STORE, v);
+    lsSet(MODEL_STORE, $('api-model').value);
+    $('api-key').value = '';
+    enableApiMode();
+  };
+  $('api-clear').onclick = () => { lsSet(KEY_STORE, ''); $('api-key').value = ''; enableApiMode(); };
+
   (async () => {
-    try { sample = window.claude ? await window.claude.use('sample') : null; } catch { sample = null; }
-    if (!sample) { $('chat-state').textContent = '在 claude.ai 開啟此頁才能使用顧問'; $('chat-send').disabled = true; return; }
-    photoLimits = (await sample.limits().catch(() => null))?.images || null;
-    $('photo-btn').hidden = !photoLimits;
-    if (photoLimits) $('photo-in').accept = photoLimits.mediaTypes.join(',');
+    let viaClaude = null;
+    try { viaClaude = window.claude ? await window.claude.use('sample') : null; } catch { viaClaude = null; }
+    if (viaClaude) {
+      sample = viaClaude;
+      photoLimits = (await sample.limits().catch(() => null))?.images || null;
+      $('photo-btn').hidden = !photoLimits;
+      if (photoLimits) $('photo-in').accept = photoLimits.mediaTypes.join(',');
+      setChatReady(true, '使用你自己的 Claude 額度');
+      return;
+    }
+    $('api-settings').hidden = false;
+    enableApiMode();
   })();
 
   run();

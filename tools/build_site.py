@@ -1,4 +1,4 @@
-# 組裝網站：把 data/boxes_all.csv 與 engine/engine.js 嵌入 site/app.html → site/dist/index.html
+# 組裝網站：把 data/ 的資料與 engine/engine.js 嵌入 site/app.html → site/dist/index.html（Artifact 用）、site/dist/preview.html 與 docs/index.html（完整 HTML，自架用）
 import csv, json, re
 from pathlib import Path
 
@@ -47,9 +47,12 @@ html = html.replace('/*__DATA__*/', data_js.replace('</', '<\\/')).replace('/*__
 out = ROOT / 'site' / 'dist' / 'index.html'
 out.parent.mkdir(parents=True, exist_ok=True)
 out.write_text(html, encoding='utf-8')
-# 本機預覽用：補上發布時才會加的文件骨架
-(out.parent / 'preview.html').write_text(
-    '<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">'
-    '<style>body{margin:0}[hidden]{display:none!important}img{max-width:100%}</style></head><body>' + html + '</body></html>',
-    encoding='utf-8')
+# 完整 HTML 文件：本機預覽（site/dist/preview.html）與自架網站（docs/index.html，給 GitHub Pages）
+full = ('<!doctype html><html lang="zh-Hant-TW"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">'
+        '<style>body{margin:0}[hidden]{display:none!important}img{max-width:100%}</style></head><body>' + html + '</body></html>')
+(out.parent / 'preview.html').write_text(full, encoding='utf-8')
+docs = ROOT / 'docs'
+docs.mkdir(exist_ok=True)
+(docs / 'index.html').write_text(full, encoding='utf-8')
+(docs / '.nojekyll').write_text('', encoding='utf-8')
 print(out, f'{len(html.encode()) / 1024:.0f} KB', len(rows), 'boxes', len(accs), 'accessories', len(tips), 'tips')

@@ -2,7 +2,8 @@
 
 輸入抽屜、層架、櫃內等空間的內尺寸，從 MUJI、NITORI、IKEA、大創（DAISO）在台灣販售的收納盒中，算出放得下的排列組合，並提供收納配件與收納技巧查詢，以及 AI 收納顧問。
 
-- 已發布的網站（私人 Artifact，目前線上版本見下方「已知發布問題」）：https://claude.ai/artifact/EYDg1oRJwnNymk7rq14AJb
+- **自架版**：`docs/index.html`，可放上 GitHub Pages。完整資料，AI 顧問使用你自己的 Anthropic API 金鑰（見下方「自架網站」）。
+- **claude.ai Artifact 版**：AI 顧問使用你的 Claude 額度，但目前線上內容不完整（見下方「已知發布問題」）。網址：https://claude.ai/artifact/EYDg1oRJwnNymk7rq14AJb
 - 資料查詢日：2026-10-26
 
 ## 資料夾結構
@@ -20,12 +21,16 @@
 │  └─ tips_all.csv           ← 自動產生：所有技巧
 ├─ engine/
 │  ├─ engine.js              尺寸適配計算引擎（瀏覽器與 Node 共用）
-│  └─ test.mjs               引擎測試（檢查排列是否越界、重疊、間隙不足）
+│  ├─ test.mjs               引擎測試（檢查排列是否越界、重疊、間隙不足）
+│  └─ check_dist.mjs         檢查建置結果的 script 與嵌入資料
 ├─ site/
 │  ├─ app.html               網站原始碼（模板，含兩個佔位符）
 │  └─ dist/                  ← 自動產生
-│     ├─ index.html          發布用（資料與引擎已嵌入）
-│     └─ preview.html        本機預覽用（多補了文件骨架）
+│     ├─ index.html          Artifact 發布用（資料與引擎已嵌入）
+│     └─ preview.html        本機預覽用（完整 HTML 文件）
+├─ docs/                     ← 自動產生：自架網站（GitHub Pages 從這個資料夾發布）
+│  ├─ index.html             與 preview.html 相同
+│  └─ .nojekyll
 ├─ tools/
 │  ├─ build_db.py            合併 CSV、檢查資料、產生試算表
 │  └─ build_site.py          把資料和引擎嵌進網站
@@ -49,7 +54,7 @@ python tools/build_db.py 4
 python tools/build_site.py
 ```
 
-產生 `site/dist/index.html` 和 `preview.html`。
+產生 `site/dist/index.html`、`preview.html` 與 `docs/index.html`。可以用 `node engine/check_dist.mjs` 確認資料都嵌入成功。
 
 ```bash
 cd engine && node test.mjs
@@ -65,9 +70,27 @@ cd engine && node test.mjs
 python -m http.server 8765 --directory site/dist
 ```
 
-本機預覽看不到 AI 顧問與拍照按鈕，這兩個功能只在 claude.ai 上開啟時才會出現。
+不在 claude.ai 開啟時，顧問會切換成「API 金鑰模式」（見下一節）。
 
-### 重新發布
+### 自架網站（GitHub Pages）
+
+網站是單一靜態 HTML，不需要伺服器程式。
+
+1. 把這個 repo 推到 GitHub。
+2. 到 repo 的 **Settings → Pages**，Source 選 **Deploy from a branch**，分支選 `main`、資料夾選 `/docs`，然後儲存。
+3. 幾分鐘後就能用 `https://<帳號>.github.io/<repo 名稱>/` 開啟。
+
+每次改完資料或程式，重跑 `build_db.py` 與 `build_site.py`，再 commit 並推上去，網站就會更新。
+
+**AI 顧問（API 金鑰模式）**
+- 打開網站後，在顧問區下方的「API 金鑰設定」貼上你的 Anthropic API 金鑰，並選擇模型（預設 Claude Opus 5.5，也可選 Sonnet 5.5 或 Haiku 5.5）。
+- 金鑰只存在你那個瀏覽器的 localStorage，不會寫進程式碼或 repo，所以每台裝置要各貼一次。
+- 費用由你的 Anthropic 帳號支付，建議在 Anthropic Console 設定用量上限。不要在共用電腦上儲存金鑰；用完可以按「刪除金鑰」。
+- 網頁直接從瀏覽器呼叫 Anthropic API（官方 TypeScript SDK `@anthropic-ai/sdk@0.110.0`，從 jsDelivr 載入，`dangerouslyAllowBrowser`）。金鑰在瀏覽器裡，任何能用你的瀏覽器的人都能取得，所以只適合自己使用。如果要開放給別人用，要改成由後端代為呼叫。
+- Opus 5.5 與 Sonnet 5.5 開啟了伺服器端安全攔截後備（`fallbacks: "default"`）：請求被安全分類器拒絕時，會自動改用其他模型回答。
+- 照片會先在瀏覽器縮小到長邊 1568px 再送出。對話紀錄同樣只存在瀏覽器。
+
+### 重新發布 Artifact
 
 請 Claude 把 `site/dist/index.html` 發布到上面那個 Artifact 網址，網址就會保持不變。capabilities 要維持 `{"sample": {"images": true}}`，AI 顧問與照片評估才能使用。
 
