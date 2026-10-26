@@ -1,0 +1,849 @@
+<title>台灣收納盒規劃器</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@600;900&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* 版面：左欄量尺寸、中欄看排法（俯視平面圖照比例畫）、右欄問收納顧問；窄螢幕依序堆疊 */
+:root {
+  --bg: #eef1f0;          /* 半透明 PP 盒那種帶灰綠的白 */
+  --panel: #ffffff;
+  --ink: #1d2725;
+  --muted: #5d6b68;
+  --line: #d3dbd9;
+  --accent: #2f6f62;      /* 量尺的墨綠 */
+  --accent-ink: #ffffff;
+  --accent-soft: #dcebe7;
+  --warn: #9a5b00;
+  --warn-soft: #fbefd9;
+  --muji: #8a2432;
+  --nitori: #2d7a3a;
+  --ikea: #1f5fa8;
+  --daiso: #b02a6b;
+  --grid: #e4eae8;
+  --f-display: "Noto Serif TC", "Songti TC", serif;
+  --f-body: "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif;
+  --f-num: "JetBrains Mono", ui-monospace, Consolas, monospace;
+  --r: 6px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #141a19; --panel: #1c2422; --ink: #e5ecea; --muted: #9aaaa6; --line: #33403d;
+    --accent: #6fc0ac; --accent-ink: #0d1716; --accent-soft: #23362f; --warn: #f0b860; --warn-soft: #3a2d17;
+    --muji: #e07a88; --nitori: #74c483; --ikea: #7fb0ec; --daiso: #ef8fbe; --grid: #26302e; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #141a19; --panel: #1c2422; --ink: #e5ecea; --muted: #9aaaa6; --line: #33403d;
+  --accent: #6fc0ac; --accent-ink: #0d1716; --accent-soft: #23362f; --warn: #f0b860; --warn-soft: #3a2d17;
+  --muji: #e07a88; --nitori: #74c483; --ikea: #7fb0ec; --daiso: #ef8fbe; --grid: #26302e; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font-family: var(--f-body); font-size: 15px; line-height: 1.6; }
+.wrap { padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 20px 40px; max-width: 1480px; margin: 0 auto; }
+header.top { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px 24px; margin-bottom: 18px; }
+h1 { font-family: var(--f-display); font-weight: 900; font-size: 1.75rem; margin: 0; letter-spacing: 0.02em; text-wrap: balance; }
+h1 small { font-family: var(--f-body); font-weight: 500; font-size: 0.85rem; color: var(--muted); margin-left: 10px; letter-spacing: 0; }
+.stamp { font-size: 0.8rem; color: var(--muted); display: flex; flex-wrap: wrap; gap: 4px 14px; align-items: center; }
+.dot { display: inline-block; width: 9px; height: 9px; border-radius: 2px; margin-right: 5px; vertical-align: 0; }
+.dot.MUJI { background: var(--muji); } .dot.NITORI { background: var(--nitori); } .dot.IKEA { background: var(--ikea); } .dot.DAISO { background: var(--daiso); }
+
+.grid { display: grid; grid-template-columns: 300px minmax(0, 1fr) 380px; gap: 18px; align-items: start; }
+@media (max-width: 1180px) { .grid { grid-template-columns: 300px minmax(0, 1fr); } .chat { grid-column: 1 / -1; } }
+@media (max-width: 780px) { .grid { grid-template-columns: minmax(0, 1fr); } }
+
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: var(--r); padding: 16px; min-width: 0; }
+.panel h2 { font-size: 0.78rem; letter-spacing: 0.12em; color: var(--muted); font-weight: 700; margin: 0 0 10px; }
+.side { display: flex; flex-direction: column; gap: 14px; position: sticky; top: calc(env(safe-area-inset-top, 0px) + 12px); }
+@media (max-width: 780px) { .side { position: static; } }
+
+label { font-size: 0.82rem; color: var(--muted); display: block; margin-bottom: 3px; }
+input[type=text], input[type=number], select, textarea {
+  width: 100%; font: inherit; color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 4px; padding: 7px 9px;
+}
+input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.dims { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.dims input { font-family: var(--f-num); font-size: 1.05rem; text-align: right; }
+.dims .unit { font-size: 0.72rem; color: var(--muted); }
+.fields { display: flex; flex-direction: column; gap: 12px; }
+.row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { font: inherit; font-size: 0.8rem; border: 1px solid var(--line); background: var(--bg); color: var(--ink); border-radius: 999px; padding: 3px 10px; cursor: pointer; }
+.chip:hover { border-color: var(--accent); }
+.chip.on { background: var(--accent-soft); border-color: var(--accent); }
+.chip .x { margin-left: 6px; color: var(--muted); }
+.seg { display: grid; grid-template-columns: 1fr 1fr; border: 1px solid var(--line); border-radius: 4px; overflow: hidden; }
+.seg button { font: inherit; font-size: 0.85rem; border: 0; background: var(--bg); color: var(--ink); padding: 6px; cursor: pointer; }
+.seg button[aria-pressed=true] { background: var(--accent); color: var(--accent-ink); }
+.checks { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 0.88rem; }
+.checks label { color: var(--ink); font-size: 0.88rem; display: flex; gap: 6px; align-items: center; margin: 0; cursor: pointer; }
+.btn { font: inherit; font-weight: 700; border: 0; border-radius: 4px; background: var(--accent); color: var(--accent-ink); padding: 9px 14px; cursor: pointer; }
+.btn.ghost { background: transparent; color: var(--accent); border: 1px solid var(--accent); font-weight: 500; }
+.btn:disabled { opacity: 0.5; cursor: default; }
+.hint { font-size: 0.78rem; color: var(--muted); margin: 0; }
+
+/* 結果 */
+.results-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 6px 16px; margin-bottom: 12px; }
+.results-head h2 { margin: 0; font-family: var(--f-display); font-weight: 600; font-size: 1.25rem; letter-spacing: 0; color: var(--ink); }
+.results-head .meta { font-size: 0.82rem; color: var(--muted); font-family: var(--f-num); }
+.badge-ex { font-size: 0.72rem; background: var(--warn-soft); color: var(--warn); border-radius: 3px; padding: 1px 6px; margin-left: 8px; font-family: var(--f-body); }
+.cards { display: flex; flex-direction: column; gap: 14px; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: var(--r); padding: 14px; display: grid; grid-template-columns: minmax(180px, 280px) minmax(0, 1fr); gap: 16px; }
+@media (max-width: 560px) { .card { grid-template-columns: minmax(0, 1fr); } }
+.card.best { border-color: var(--accent); }
+.plan svg { width: 100%; height: auto; display: block; }
+.plan .cap { font-size: 0.72rem; color: var(--muted); text-align: center; font-family: var(--f-num); margin-top: 4px; }
+.card h3 { margin: 0 0 6px; font-size: 1rem; font-weight: 700; }
+.card h3 .kind { font-size: 0.72rem; font-weight: 500; color: var(--accent); border: 1px solid var(--accent); border-radius: 3px; padding: 0 5px; margin-right: 6px; vertical-align: 1px; }
+.stats { display: flex; flex-wrap: wrap; gap: 6px 18px; margin-bottom: 8px; }
+.stat { display: flex; flex-direction: column; }
+.stat b { font-family: var(--f-num); font-size: 1.15rem; font-weight: 600; font-variant-numeric: tabular-nums; }
+.stat span { font-size: 0.72rem; color: var(--muted); }
+.meter { height: 5px; background: var(--grid); border-radius: 3px; overflow: hidden; margin: 2px 0 10px; }
+.meter i { display: block; height: 100%; background: var(--accent); }
+ul.items { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; font-size: 0.88rem; }
+ul.items li { display: grid; grid-template-columns: 22px 34px minmax(0, 1fr); gap: 6px; align-items: baseline; }
+ul.items .no { font-family: var(--f-num); font-size: 0.75rem; color: var(--muted); }
+ul.items .q { font-family: var(--f-num); font-weight: 600; }
+ul.items .sz { font-family: var(--f-num); font-size: 0.78rem; color: var(--muted); white-space: nowrap; }
+details.buy { margin-top: 10px; font-size: 0.85rem; }
+details.buy summary { cursor: pointer; color: var(--accent); }
+.buylist { overflow-x: auto; margin-top: 6px; }
+table { border-collapse: collapse; width: 100%; font-size: 0.82rem; }
+th, td { text-align: left; padding: 5px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-weight: 500; color: var(--muted); font-size: 0.75rem; }
+td.n { font-family: var(--f-num); text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+a { color: var(--accent); }
+.empty { padding: 30px 16px; text-align: center; color: var(--muted); }
+.note { font-size: 0.8rem; background: var(--warn-soft); color: var(--warn); border-radius: 4px; padding: 6px 10px; }
+
+/* 商品目錄 */
+details.catalog { margin-top: 18px; }
+details.catalog > summary { cursor: pointer; font-weight: 700; padding: 4px 0; }
+.cat-tools { display: grid; grid-template-columns: minmax(0, 2fr) repeat(4, minmax(0, 1fr)); gap: 8px; margin: 10px 0; }
+@media (max-width: 640px) { .cat-tools { grid-template-columns: 1fr 1fr; } .cat-tools .q { grid-column: 1 / -1; } }
+.cat-table { overflow-x: auto; max-height: 520px; overflow-y: auto; border: 1px solid var(--line); border-radius: 4px; }
+.cat-table table { min-width: 640px; }
+.cat-table thead th { position: sticky; top: 0; background: var(--panel); }
+
+/* 顧問 */
+.chat { display: flex; flex-direction: column; gap: 10px; position: sticky; top: calc(env(safe-area-inset-top, 0px) + 12px); max-height: calc(100vh - 40px); }
+@media (max-width: 1180px) { .chat { position: static; max-height: none; } }
+.chat-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; }
+.chat-head h2 { margin: 0; }
+.chat-head-acts { display: flex; gap: 6px; }
+.hist { border: 1px solid var(--line); border-radius: var(--r); padding: 8px 10px; background: var(--bg); max-height: 260px; overflow-y: auto; }
+.hist ul { list-style: none; margin: 6px 0 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+.hist li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px; align-items: center; }
+.hist li button.open { font: inherit; font-size: 0.85rem; text-align: left; background: none; border: 0; color: var(--ink); cursor: pointer; padding: 4px 2px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hist li button.open:hover { color: var(--accent); }
+.hist li button.open[aria-current=true] { font-weight: 700; color: var(--accent); }
+.hist li .when { font-size: 0.72rem; color: var(--muted); margin-left: 6px; font-family: var(--f-num); }
+.hist li button.del { font: inherit; font-size: 0.8rem; border: 0; background: none; color: var(--muted); cursor: pointer; padding: 2px 6px; }
+.chat-log { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; min-height: 200px; max-height: 60vh; padding-right: 2px; }
+.msg { border-radius: var(--r); padding: 9px 12px; font-size: 0.9rem; min-width: 0; overflow-wrap: anywhere; }
+.msg.user { background: var(--accent-soft); align-self: flex-end; max-width: 88%; white-space: pre-wrap; }
+.msg.ai { background: var(--bg); border: 1px solid var(--line); }
+.msg.ai p { margin: 0 0 6px; } .msg.ai p:last-child { margin: 0; }
+.msg.ai ul { margin: 4px 0 6px; padding-left: 20px; }
+.msg.tool { font-size: 0.78rem; color: var(--muted); padding: 2px 4px; font-family: var(--f-num); }
+.msg.err { background: var(--warn-soft); color: var(--warn); }
+.chat-form { display: flex; flex-direction: column; gap: 6px; }
+.chat-form textarea { resize: vertical; min-height: 64px; }
+.chat-form .acts { display: flex; gap: 8px; justify-content: flex-end; align-items: center; }
+.chat-form .acts .hint { margin-right: auto; }
+.attach { display: flex; flex-wrap: wrap; gap: 6px; }
+.attach figure { margin: 0; position: relative; width: 64px; height: 64px; border-radius: 4px; overflow: hidden; border: 1px solid var(--line); }
+.attach img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.attach button { position: absolute; top: 2px; right: 2px; width: 20px; height: 20px; border: 0; border-radius: 50%; background: var(--ink); color: var(--panel); font-size: 12px; line-height: 20px; padding: 0; cursor: pointer; }
+.msg.user .thumbs { display: flex; gap: 4px; margin-top: 6px; }
+.msg.user .thumbs img { width: 56px; height: 56px; object-fit: cover; border-radius: 3px; }
+.photo-btn { position: relative; overflow: hidden; }
+.tips { display: flex; flex-direction: column; gap: 10px; margin-top: 8px; }
+.tip { border: 1px solid var(--line); border-radius: var(--r); padding: 10px 12px; background: var(--panel); }
+.tip h4 { margin: 0 0 4px; font-size: 0.95rem; }
+.tip p { margin: 0 0 6px; font-size: 0.88rem; }
+.tip ol { margin: 0 0 6px; padding-left: 20px; font-size: 0.85rem; }
+.tip .src { font-size: 0.75rem; color: var(--muted); display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: baseline; }
+.tag { font-size: 0.72rem; border: 1px solid var(--line); border-radius: 3px; padding: 0 5px; color: var(--muted); }
+.tag.acc { border-color: var(--accent); color: var(--accent); }
+.related { margin-top: 18px; }
+.related h3 { font-size: 0.95rem; margin: 0; }
+.photo-btn input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+@media (prefers-reduced-motion: no-preference) { .card { transition: border-color .2s; } }
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <h1>台灣收納盒規劃器<small>量好空間，算出放得下的盒子組合</small></h1>
+    <div class="stamp" id="stamp"></div>
+  </header>
+
+  <div class="grid">
+    <aside class="side">
+      <section class="panel" aria-labelledby="h-space">
+        <h2 id="h-space">空間內尺寸</h2>
+        <div class="fields">
+          <div>
+            <label for="sp-name">名稱</label>
+            <input type="text" id="sp-name" value="書桌抽屜">
+          </div>
+          <div class="dims">
+            <div><label for="sp-w">寬 <span class="unit">cm</span></label><input type="number" id="sp-w" min="5" max="300" step="0.5" value="60" inputmode="decimal"></div>
+            <div><label for="sp-d">深 <span class="unit">cm</span></label><input type="number" id="sp-d" min="5" max="300" step="0.5" value="45" inputmode="decimal"></div>
+            <div><label for="sp-h">高 <span class="unit">cm</span></label><input type="number" id="sp-h" min="1" max="200" step="0.5" value="10" inputmode="decimal"></div>
+          </div>
+          <p class="hint">量內側淨空。抽屜的高度要量到滑軌或抽屜上緣，取較低的那個。</p>
+          <div>
+            <label>常見空間</label>
+            <div class="chips" id="presets"></div>
+          </div>
+          <div>
+            <label>我存的空間</label>
+            <div class="chips" id="saved"><span class="hint">還沒有。算好後按「存下這個空間」。</span></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel" aria-labelledby="h-opt">
+        <h2 id="h-opt">計算條件</h2>
+        <div class="fields">
+          <div>
+            <label>優先</label>
+            <div class="seg" role="group" aria-label="優先條件">
+              <button type="button" id="mode-fill" aria-pressed="true">填滿率</button>
+              <button type="button" id="mode-count" aria-pressed="false">件數少</button>
+            </div>
+          </div>
+          <div class="row2">
+            <div><label for="opt-budget">預算上限 NT$</label><input type="number" id="opt-budget" min="0" step="50" placeholder="不限"></div>
+            <div><label for="opt-gap">每邊間隙</label>
+              <select id="opt-gap"><option value="0">0 cm</option><option value="5" selected>0.5 cm</option><option value="10">1 cm</option></select></div>
+          </div>
+          <div class="row2">
+            <div><label for="opt-minh">盒子至少高 cm</label><input type="number" id="opt-minh" min="0" step="0.5" placeholder="不限"></div>
+            <div></div>
+          </div>
+          <div>
+            <label>品牌</label>
+            <div class="checks">
+              <label><input type="checkbox" id="b-MUJI" checked><span class="dot MUJI"></span>MUJI</label>
+              <label><input type="checkbox" id="b-NITORI" checked><span class="dot NITORI"></span>NITORI</label>
+              <label><input type="checkbox" id="b-IKEA" checked><span class="dot IKEA"></span>IKEA</label>
+              <label><input type="checkbox" id="b-DAISO" checked><span class="dot DAISO"></span>大創</label>
+            </div>
+          </div>
+          <div class="checks">
+            <label><input type="checkbox" id="opt-rot" checked>允許盒子轉 90°</label>
+            <label><input type="checkbox" id="opt-stack">允許堆疊（官方標示可堆疊者）</label>
+          </div>
+          <div style="display:flex; gap:8px; flex-wrap:wrap">
+            <button class="btn" type="button" id="run">計算排法</button>
+            <button class="btn ghost" type="button" id="save">存下這個空間</button>
+          </div>
+        </div>
+      </section>
+    </aside>
+
+    <main>
+      <div class="results-head">
+        <h2 id="res-title">書桌抽屜</h2>
+        <span class="meta" id="res-meta"></span>
+      </div>
+      <div class="cards" id="cards"></div>
+      <section class="related" id="related" hidden aria-labelledby="h-related">
+        <h3 id="h-related">這類空間的收納技巧</h3>
+        <div class="tips" id="related-tips"></div>
+      </section>
+
+      <details class="catalog panel" id="catalog">
+        <summary>瀏覽商品資料庫</summary>
+        <div class="cat-tools">
+          <div class="q"><label for="c-q">關鍵字</label><input type="text" id="c-q" placeholder="例如 抽屜、檔案、SKUBB"></div>
+          <div><label for="c-brand">品牌</label><select id="c-brand"><option value="">全部</option><option>MUJI</option><option>NITORI</option><option>IKEA</option><option value="DAISO">大創</option></select></div>
+          <div><label for="c-w">寬 ≤ cm</label><input type="number" id="c-w" min="0" step="0.5"></div>
+          <div><label for="c-d">深 ≤ cm</label><input type="number" id="c-d" min="0" step="0.5"></div>
+          <div><label for="c-h">高 ≤ cm</label><input type="number" id="c-h" min="0" step="0.5"></div>
+        </div>
+        <p class="hint" id="c-count"></p>
+        <div class="cat-table"><table><thead><tr><th>品牌</th><th>品名</th><th>外寸 寬×深×高</th><th>內寸</th><th>售價</th><th>備註</th></tr></thead><tbody id="c-body"></tbody></table></div>
+      </details>
+
+      <details class="catalog panel" id="acc-catalog">
+        <summary>瀏覽收納配件（伸縮棒、鐵網、隔板、掛勾…）</summary>
+        <div class="cat-tools">
+          <div class="q"><label for="a-q">關鍵字</label><input type="text" id="a-q" placeholder="例如 水槽、門後、不鏽鋼"></div>
+          <div><label for="a-cat">類別</label><select id="a-cat"><option value="">全部</option></select></div>
+          <div><label for="a-brand">品牌</label><select id="a-brand"><option value="">全部</option><option>MUJI</option><option>NITORI</option><option>IKEA</option><option value="DAISO">大創</option></select></div>
+          <div><label for="a-span">要撐的跨距 cm</label><input type="number" id="a-span" min="0" step="0.5" placeholder="伸縮品用"></div>
+          <div><label for="a-load">耐重至少 kg</label><input type="number" id="a-load" min="0" step="0.5"></div>
+        </div>
+        <p class="hint" id="a-count"></p>
+        <div class="cat-table"><table><thead><tr><th>品牌</th><th>品名</th><th>類別</th><th>尺寸／伸縮範圍</th><th>耐重</th><th>安裝</th><th>售價</th><th>官方建議用途</th></tr></thead><tbody id="a-body"></tbody></table></div>
+      </details>
+
+      <details class="catalog panel" id="tip-catalog">
+        <summary>收納技巧</summary>
+        <div class="cat-tools">
+          <div class="q"><label for="t-q">關鍵字</label><input type="text" id="t-q" placeholder="例如 噴瓶、S 鉤、直立"></div>
+          <div><label for="t-space">空間</label><select id="t-space"><option value="">全部</option></select></div>
+          <div><label for="t-acc">用到的配件</label><select id="t-acc"><option value="">不限</option></select></div>
+          <div><label for="t-src">來源</label><select id="t-src"><option value="">全部</option><option>品牌官方</option><option>台灣媒體</option><option>日本媒體</option></select></div>
+          <div></div>
+        </div>
+        <p class="hint" id="t-count"></p>
+        <div class="tips" id="t-list"></div>
+      </details>
+    </main>
+
+    <section class="chat panel" aria-labelledby="h-chat">
+      <div class="chat-head">
+        <h2 id="h-chat">收納顧問</h2>
+        <div class="chat-head-acts">
+          <button class="chip" type="button" id="hist-btn" aria-expanded="false" aria-controls="hist">歷史紀錄</button>
+          <button class="chip" type="button" id="new-chat">新對話</button>
+        </div>
+      </div>
+      <div class="hist" id="hist" hidden>
+        <p class="hint">對話只存在這個瀏覽器，換裝置或清除網站資料就看不到。照片不會保存。</p>
+        <ul id="hist-list"></ul>
+      </div>
+      <div class="chat-log" id="log" aria-live="polite">
+        <div class="msg ai"><p>告訴我要整理的地方和尺寸，以及想放什麼東西，我會用左邊的資料庫幫你算排法，再說明怎麼選。</p><p>例如：「衣櫃抽屜內寬 57、深 30、高 15，要放襪子和內衣，預算 600」。</p><p>也可以拍下抽屜或櫃子現況，我會看照片評估收納問題；尺寸仍請用捲尺量。</p></div>
+      </div>
+      <div class="chips" id="suggest"></div>
+      <form class="chat-form" id="chat-form">
+        <label for="chat-in" class="hint">你的問題</label>
+        <textarea id="chat-in" placeholder="輸入空間尺寸與要收的物品，也可以附上照片"></textarea>
+        <div class="attach" id="attach"></div>
+        <div class="acts">
+          <span class="hint" id="chat-state">使用你自己的 Claude 額度</span>
+          <label class="btn ghost photo-btn" id="photo-btn" hidden>拍照／選照片<input type="file" id="photo-in" accept="image/*" capture="environment" multiple></label>
+          <button class="btn ghost" type="button" id="chat-stop" hidden>停止</button>
+          <button class="btn" type="submit" id="chat-send">送出</button>
+        </div>
+      </form>
+    </section>
+  </div>
+</div>
+
+<script>
+/*__DATA__*/
+</script>
+<script>
+/*__ENGINE__*/
+</script>
+<script>
+(() => {
+  const $ = (id) => document.getElementById(id);
+  const BRANDS = ['MUJI', 'NITORI', 'IKEA', 'DAISO'];
+  const BRAND_ZH = { MUJI: 'MUJI', NITORI: 'NITORI', IKEA: 'IKEA', DAISO: '大創' };
+  const BOXES = RAW_BOXES.map(normalizeBox);
+  const BY_ID = new Map(BOXES.map((b) => [b.id, b]));
+  const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const fmt = (n) => (n == null ? '—' : Number(n).toLocaleString('zh-TW'));
+  const cm = (v) => (Math.round(v * 10) / 10).toString();
+
+  // 頁首資料戳記
+  const counts = Object.fromEntries(BRANDS.map((b) => [b, 0]));
+  BOXES.forEach((b) => counts[b.brand]++);
+  $('stamp').innerHTML = Object.entries(counts).filter(([, v]) => v).map(([k, v]) => `<span><span class="dot ${k}"></span>${BRAND_ZH[k]} ${v}</span>`).join('')
+    + `<span>收納盒 ${BOXES.length} 款・配件 ${RAW_ACC.length} 款・台灣查價 ${DATA_DATE}</span>`;
+
+  // ---- 空間預設與儲存 ----
+  const PRESETS = [
+    { name: '書桌抽屜', w: 60, d: 45, h: 10 },
+    { name: '衣櫃抽屜', w: 57, d: 30, h: 15 },
+    { name: '層架格', w: 38, d: 30, h: 25 },
+    { name: '洗手台下', w: 80, d: 50, h: 55, stack: true },
+    { name: '冰箱冷藏層', w: 60, d: 40, h: 22 },
+  ];
+  const store = {
+    get() { try { return JSON.parse(localStorage.getItem('boxplan.spaces') || '[]'); } catch { return []; } },
+    set(v) { try { localStorage.setItem('boxplan.spaces', JSON.stringify(v)); } catch {} },
+  };
+  function chip(label, onClick, extra) {
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'chip'; b.textContent = label; b.onclick = onClick;
+    if (extra) b.append(extra);
+    return b;
+  }
+  function loadSpace(s) {
+    $('sp-name').value = s.name; $('sp-w').value = s.w; $('sp-d').value = s.d; $('sp-h').value = s.h;
+    if (s.stack != null) $('opt-stack').checked = !!s.stack;
+    run();
+  }
+  PRESETS.forEach((p) => $('presets').append(chip(`${p.name} ${p.w}×${p.d}×${p.h}`, () => loadSpace(p))));
+  function renderSaved() {
+    const list = store.get(), box = $('saved');
+    box.innerHTML = '';
+    if (!list.length) { box.innerHTML = '<span class="hint">還沒有。算好後按「存下這個空間」。</span>'; return; }
+    list.forEach((s, i) => {
+      const x = document.createElement('span'); x.className = 'x'; x.textContent = '×'; x.title = '刪除';
+      x.onclick = (e) => { e.stopPropagation(); const l = store.get(); l.splice(i, 1); store.set(l); renderSaved(); };
+      box.append(chip(`${s.name} ${s.w}×${s.d}×${s.h}`, () => loadSpace(s), x));
+    });
+  }
+  $('save').onclick = () => {
+    const s = readSpace(); if (!s) return;
+    const l = store.get().filter((x) => x.name !== s.name); l.unshift(s); store.set(l.slice(0, 12)); renderSaved();
+  };
+  renderSaved();
+
+  // ---- 條件 ----
+  let mode = 'fill';
+  function setMode(m) { mode = m; $('mode-fill').setAttribute('aria-pressed', m === 'fill'); $('mode-count').setAttribute('aria-pressed', m === 'count'); }
+  $('mode-fill').onclick = () => { setMode('fill'); run(); };
+  $('mode-count').onclick = () => { setMode('count'); run(); };
+  function readSpace() {
+    const w = parseFloat($('sp-w').value), d = parseFloat($('sp-d').value), h = parseFloat($('sp-h').value);
+    if (!(w > 0 && d > 0 && h > 0)) return null;
+    return { name: $('sp-name').value.trim() || '未命名空間', w, d, h, stack: $('opt-stack').checked };
+  }
+  function readOpts() {
+    const brands = BRANDS.filter((b) => $('b-' + b).checked);
+    const budget = parseFloat($('opt-budget').value), minh = parseFloat($('opt-minh').value);
+    return { mode, gap: Number($('opt-gap').value), budget: budget > 0 ? budget : null, brands,
+      minBoxH: minh > 0 ? minh : null, allowRotate: $('opt-rot').checked, allowStack: $('opt-stack').checked };
+  }
+  function setOpts(o) {
+    if (o.mode) setMode(o.mode === 'count' ? 'count' : 'fill');
+    if (o.gap != null) $('opt-gap').value = String([0, 5, 10].reduce((a, b) => Math.abs(b - o.gap) < Math.abs(a - o.gap) ? b : a));
+    $('opt-budget').value = o.budget > 0 ? o.budget : '';
+    $('opt-minh').value = o.minBoxH > 0 ? o.minBoxH : '';
+    if (Array.isArray(o.brands) && o.brands.length) BRANDS.forEach((b) => { $('b-' + b).checked = o.brands.includes(b); });
+    if (o.allowStack != null) $('opt-stack').checked = !!o.allowStack;
+    if (o.allowRotate != null) $('opt-rot').checked = !!o.allowRotate;
+  }
+
+  // ---- 計算與呈現 ----
+  let isExample = true, last = null, renderRelated = () => {};
+  function compute(space, opts) {
+    if (!opts.brands.length) return { results: [], note: '至少勾一個品牌。' };
+    return recommend(space, BOXES, { ...opts, maxResults: 6 });
+  }
+  function run() {
+    const space = readSpace();
+    if (!space) { $('cards').innerHTML = '<div class="panel empty">請輸入寬、深、高（cm）。</div>'; return; }
+    const opts = readOpts();
+    const t = performance.now();
+    const r = compute(space, opts);
+    last = { space, opts, r };
+    render(space, opts, r, performance.now() - t);
+    renderRelated(space);
+    return r;
+  }
+  ['sp-w', 'sp-d', 'sp-h', 'opt-budget', 'opt-minh'].forEach((id) => $(id).addEventListener('keydown', (e) => { if (e.key === 'Enter') { isExample = false; run(); } }));
+  ['opt-gap', 'opt-rot', 'opt-stack', ...BRANDS.map((b) => 'b-' + b)].forEach((id) => $(id).addEventListener('change', () => run()));
+  $('run').onclick = () => { isExample = false; run(); };
+
+  const KIND = { mixed: '混搭', series: '同系列', single: '單一款式' };
+  function render(space, opts, r, ms) {
+    $('res-title').innerHTML = esc(space.name) + (isExample ? '<span class="badge-ex">範例空間</span>' : '');
+    const gapTxt = opts.gap ? `每邊留 ${opts.gap / 10} cm` : '不留間隙';
+    $('res-meta').textContent = `${cm(space.w)} × ${cm(space.d)} × 高 ${cm(space.h)} cm｜${gapTxt}｜${r.results.length} 種排法｜${Math.round(ms)} ms`;
+    const box = $('cards');
+    if (!r.results.length) { box.innerHTML = `<div class="panel empty">${esc(r.note || '沒有找到放得下的組合。試著放寬預算、間隙或品牌。')}</div>`; return; }
+    box.innerHTML = r.results.map((s, i) => card(s, r.space, i === 0, opts)).join('');
+  }
+  function card(s, S, best, opts) {
+    const order = s.items.map((i) => i.id);
+    const plan = planSVG(s, S, order);
+    const over = opts.budget != null && s.price > opts.budget;
+    const title = s.label.replace(/^(同系列|單一款式)：/, '');
+    const items = s.items.map((it, k) => `<li><span class="no">${k + 1}</span><span class="q">${it.qty}×</span>
+      <span><span class="dot ${it.brand}"></span>${it.brand === 'DAISO' ? '大創 ' : ''}${esc(it.name)} <span class="sz">${it.size.map(cm).join('×')}</span></span></li>`).join('');
+    const buy = s.shopping.map((b) => `<tr><td>${b.kind === 'set' ? '整組 ' : ''}<a href="${esc(b.url)}" target="_blank" rel="noopener">${esc(b.name)}</a>${b.parts ? `<br><span class="hint">用到 ${b.parts.map((p) => p.need + ' 件').join('、')}</span>` : ''}</td>
+      <td class="n">${b.qty}${b.kind === 'set' ? ' 組' : ''}</td><td class="n">${fmt(b.unitPrice)}</td><td class="n">${fmt(b.subtotal)}</td></tr>`).join('');
+    return `<article class="card${best ? ' best' : ''}">
+      <div class="plan">${plan}<div class="cap">俯視圖・下方為開口側・1 格 = 10 cm</div></div>
+      <div>
+        <h3><span class="kind">${KIND[s.kind]}</span>${esc(title)}</h3>
+        <div class="stats">
+          <div class="stat"><b>${(s.floorFill * 100).toFixed(0)}%</b><span>地面填滿</span></div>
+          <div class="stat"><b>${(s.volumeFill * 100).toFixed(0)}%</b><span>空間體積</span></div>
+          <div class="stat"><b>${s.count}</b><span>件</span></div>
+          <div class="stat"><b>${s.priceUnknown ? '?' : 'NT$' + fmt(s.price)}</b><span>${s.hasSet ? '含整組購買' : '合計'}</span></div>
+        </div>
+        <div class="meter" aria-hidden="true"><i style="width:${Math.min(100, s.floorFill * 100).toFixed(1)}%"></i></div>
+        ${over ? '<p class="note">超出預算</p>' : ''}
+        <ul class="items">${items}</ul>
+        <details class="buy"><summary>購買清單與官網連結</summary>
+          <div class="buylist"><table><thead><tr><th>品項</th><th>數量</th><th>單價</th><th>小計</th></tr></thead><tbody>${buy}</tbody></table></div>
+        </details>
+      </div>
+    </article>`;
+  }
+  function planSVG(s, S, order) {
+    const pad = Math.max(S.w, S.d) * 0.02;
+    const fs = Math.max(12, Math.min(S.w, S.d) / 12);
+    let g = '';
+    for (let x = 100; x < S.w; x += 100) g += `<line x1="${x}" y1="0" x2="${x}" y2="${S.d}" />`;
+    for (let y = 100; y < S.d; y += 100) g += `<line x1="0" y1="${S.d - y}" x2="${S.w}" y2="${S.d - y}" />`;
+    const rects = s.placements.map((p) => {
+      const b = BY_ID.get(p.id), y = S.d - p.y - p.d, n = order.indexOf(p.id) + 1;
+      const color = `var(--${b.brand.toLowerCase()})`;
+      const f = Math.min(fs, p.w * 0.45, p.d * 0.45);
+      return `<g><title>${esc(b.name)}</title><rect x="${p.x}" y="${y}" width="${p.w}" height="${p.d}" rx="4" fill="${color}" fill-opacity="0.16" stroke="${color}" stroke-width="3" />
+        <text x="${p.x + p.w / 2}" y="${y + p.d / 2}" font-size="${f}" fill="${color}" text-anchor="middle" dominant-baseline="central" font-family="JetBrains Mono, monospace">${n}${p.layers > 1 ? '×' + p.layers : ''}</text></g>`;
+    }).join('');
+    return `<svg viewBox="${-pad} ${-pad} ${S.w + 2 * pad} ${S.d + 2 * pad}" role="img" aria-label="${esc(s.label)} 的俯視排列圖">
+      <rect x="0" y="0" width="${S.w}" height="${S.d}" fill="var(--panel)" stroke="var(--ink)" stroke-width="4" />
+      <g stroke="var(--grid)" stroke-width="2">${g}</g>${rects}
+      <line x1="${S.w * 0.3}" y1="${S.d}" x2="${S.w * 0.7}" y2="${S.d}" stroke="var(--accent)" stroke-width="8" />
+    </svg>`;
+  }
+
+  // ---- 商品目錄 ----
+  function renderCatalog() {
+    const q = $('c-q').value.trim().toLowerCase(), br = $('c-brand').value;
+    const mw = parseFloat($('c-w').value), md = parseFloat($('c-d').value), mh = parseFloat($('c-h').value);
+    const W = mw > 0 ? mw : Infinity, D = md > 0 ? md : Infinity;
+    const list = BOXES.filter((b) => (!br || b.brand === br)
+      && (!q || (b.name + b.series + b.notes).toLowerCase().includes(q))
+      && ((b.w <= W && b.d <= D) || (b.d <= W && b.w <= D))
+      && (!(mh > 0) || b.h <= mh));
+    $('c-count').textContent = `符合 ${list.length} 款` + (list.length > 120 ? '，顯示前 120 款' : '') + '。寬深可互換（盒子能轉向）。';
+    $('c-body').innerHTML = list.slice(0, 120).map((b) => `<tr>
+      <td><span class="dot ${b.brand}"></span>${BRAND_ZH[b.brand]}</td>
+      <td><a href="${esc(b.url)}" target="_blank" rel="noopener">${esc(b.name)}</a></td>
+      <td class="n">${cm(b.w)}×${cm(b.d)}×${cm(b.h)}</td>
+      <td class="n">${b.iw ? cm(b.iw) + '×' + cm(b.id_) + '×' + cm(b.ih) : '—'}</td>
+      <td class="n">${b.set ? '整組 ' + fmt(b.set.price) : fmt(b.price)}</td>
+      <td class="hint">${esc(b.notes.replace(/^SET:[^;]*;/, '').slice(0, 80))}</td></tr>`).join('');
+  }
+  ['c-q', 'c-brand', 'c-w', 'c-d', 'c-h'].forEach((id) => $(id).addEventListener('input', renderCatalog));
+  renderCatalog();
+
+  // ---- 收納配件 ----
+  const ACC_CATS = ['伸縮棒', '伸縮層架', '鐵網', '網片配件', '抽屜隔板', '小型置物架', '掛勾', '吊掛收納'];
+  const num = (v) => (v === '' || v == null ? null : Number(v));
+  const ACCS = RAW_ACC.map((r) => {
+    const m = /^SET:([^|]*)\|(\d*)\|(\d+)\|(\d+);/.exec(r.notes || '');
+    return { id: r.id, brand: r.brand, category: r.category, name: r.name, lmin: num(r.length_min), lmax: num(r.length_max),
+      w: num(r.width), d: num(r.depth), h: num(r.height), dia: num(r.diameter), load: num(r.load_kg), mount: r.mount, material: r.material,
+      price: num(r.price_twd), set: m ? { price: num(m[2]), total: Number(m[4]) } : null, url: r.url, usage: r.usage || '',
+      notes: (r.notes || '').replace(/^SET:[^;]*;/, '') };
+  });
+  ACC_CATS.forEach((c) => { const o = document.createElement('option'); o.textContent = c; $('a-cat').append(o); });
+  const accSize = (a) => a.lmin != null ? `${cm(a.lmin)}–${cm(a.lmax)} cm` : [a.w, a.d, a.h].some((v) => v != null) ? [a.w, a.d, a.h].map((v) => (v == null ? '—' : cm(v))).join('×') : (a.lmax != null ? `長 ${cm(a.lmax)}` : '—');
+  const accPrice = (a) => a.set ? `${a.set.total} 件 ${fmt(a.set.price)}` : fmt(a.price);
+  function filterAcc({ keyword, category, brand, span, minLoad }) {
+    const kw = String(keyword || '').toLowerCase().split(/\s+/).filter(Boolean);
+    return ACCS.filter((a) => (!category || a.category === category) && (!brand || a.brand === brand)
+      && kw.every((k) => (a.name + a.category + a.usage + a.notes + a.mount).toLowerCase().includes(k))
+      && (!(span > 0) || (a.lmin != null && a.lmax != null && a.lmin <= span && span <= a.lmax))
+      && (!(minLoad > 0) || (a.load != null && a.load >= minLoad)));
+  }
+  function renderAcc() {
+    const list = filterAcc({ keyword: $('a-q').value, category: $('a-cat').value, brand: $('a-brand').value,
+      span: parseFloat($('a-span').value), minLoad: parseFloat($('a-load').value) });
+    $('a-count').textContent = ACCS.length ? `符合 ${list.length} 款` + (list.length > 120 ? '，顯示前 120 款' : '') + '。填了跨距只會列出撐得到這個寬度的伸縮品。' : '配件資料整理中。';
+    $('a-body').innerHTML = list.slice(0, 120).map((a) => `<tr>
+      <td><span class="dot ${a.brand}"></span>${BRAND_ZH[a.brand] || a.brand}</td>
+      <td><a href="${esc(a.url)}" target="_blank" rel="noopener">${esc(a.name)}</a></td>
+      <td>${esc(a.category)}</td><td class="n">${accSize(a)}</td><td class="n">${a.load != null ? cm(a.load) + ' kg' : '—'}</td>
+      <td>${esc(a.mount || '—')}</td><td class="n">${accPrice(a)}</td><td class="hint">${esc((a.usage || a.notes).slice(0, 80))}</td></tr>`).join('');
+  }
+  ['a-q', 'a-cat', 'a-brand', 'a-span', 'a-load'].forEach((id) => $(id).addEventListener('input', renderAcc));
+  renderAcc();
+
+  // ---- 收納技巧 ----
+  const SPACES = ['抽屜', '衣櫃', '廚房', '水槽下', '洗手台下', '冰箱', '浴室', '玄關', '桌面', '層架', '壁櫥', '通用'];
+  const TIPS = RAW_TIPS.map((t) => ({ ...t, topics: (t.topic || '').split('/').filter(Boolean), accs: (t.uses_accessories || '').split('/').filter(Boolean),
+    steps: (t.how_to || '').split('；').map((x) => x.trim()).filter(Boolean) }));
+  SPACES.forEach((x) => { const o = document.createElement('option'); o.textContent = x; $('t-space').append(o); });
+  ACC_CATS.forEach((x) => { const o = document.createElement('option'); o.textContent = x; $('t-acc').append(o); });
+  function filterTips({ space, keyword, accessory, sourceType }) {
+    const kw = String(keyword || '').toLowerCase().split(/\s+/).filter(Boolean);
+    return TIPS.filter((t) => (!space || t.space === space) && (!accessory || t.accs.includes(accessory)) && (!sourceType || t.source_type === sourceType)
+      && kw.every((k) => (t.title + t.tip + t.how_to + t.topic + t.uses_products + t.uses_accessories).toLowerCase().includes(k)))
+      .sort((a, b) => (b.confidence === 'high') - (a.confidence === 'high') || String(b.published_date).localeCompare(String(a.published_date)));
+  }
+  function tipCard(t) {
+    const tags = t.topics.map((x) => `<span class="tag">${esc(x)}</span>`).join('') + t.accs.map((x) => `<span class="tag acc">${esc(x)}</span>`).join('');
+    return `<article class="tip"><h4>${esc(t.title)}</h4><p>${esc(t.tip)}</p>
+      ${t.steps.length ? `<ol>${t.steps.map((x) => `<li>${esc(x)}</li>`).join('')}</ol>` : ''}
+      <div class="src"><span class="tag">${esc(t.space)}</span>${tags}<span>出處：<a href="${esc(t.url)}" target="_blank" rel="noopener">${esc(t.source_name)}</a></span><span>${esc(t.source_type)}${t.published_date ? '・' + esc(t.published_date) : ''}</span></div></article>`;
+  }
+  function renderTips() {
+    const list = filterTips({ space: $('t-space').value, keyword: $('t-q').value, accessory: $('t-acc').value, sourceType: $('t-src').value });
+    $('t-count').textContent = TIPS.length ? `符合 ${list.length} 條` + (list.length > 60 ? '，顯示前 60 條' : '') + '。內容為摘要改寫，細節請看出處原文。' : '收納技巧整理中。';
+    $('t-list').innerHTML = list.slice(0, 60).map(tipCard).join('');
+  }
+  ['t-q', 't-space', 't-acc', 't-src'].forEach((id) => $(id).addEventListener('input', renderTips));
+  renderTips();
+  // 依空間名稱猜空間類型，列出相關技巧
+  const SPACE_HINTS = [['水槽', '水槽下'], ['流理台', '水槽下'], ['洗手台', '洗手台下'], ['洗臉', '洗手台下'], ['冰箱', '冰箱'], ['衣櫃', '衣櫃'], ['衣櫥', '衣櫃'],
+    ['抽屜', '抽屜'], ['玄關', '玄關'], ['鞋', '玄關'], ['浴室', '浴室'], ['廚房', '廚房'], ['書桌', '桌面'], ['桌', '桌面'], ['層架', '層架'], ['壁櫥', '壁櫥'], ['和室', '壁櫥']];
+  function guessSpace(name) { const hit = SPACE_HINTS.find(([k]) => name.includes(k)); return hit ? hit[1] : null; }
+  renderRelated = (space) => {
+    const sp = guessSpace(space.name);
+    const list = sp ? filterTips({ space: sp }).slice(0, 3) : [];
+    $('related').hidden = !list.length;
+    $('h-related').textContent = sp ? `${sp}的收納技巧` : '收納技巧';
+    $('related-tips').innerHTML = list.map(tipCard).join('');
+  };
+  if (last) renderRelated(last.space);
+
+  // ---- 收納顧問（Claude） ----
+  const RULES = `你是台灣的收納顧問，協助使用者為抽屜、層架、櫃內等空間挑選 MUJI、NITORI、IKEA、大創（DAISO）的收納小盒（台灣在售、最長邊 ≤40cm），以及伸縮棒、鐵網、隔板、掛勾等收納配件。
+規則：
+- 一律用繁體中文（台灣用語）回答，尺寸單位 cm，價格 NT$。
+- 只推薦工具回傳的商品，不要自己編品名、尺寸或價格。提到商品時寫出品牌與品名。
+- 使用者給了空間尺寸，就呼叫 plan_space 計算（它會同時更新網頁畫面）；要找特定用途或尺寸的盒子，呼叫 search_catalog。
+- 尺寸順序是 寬×深×高；寬＝面向空間時左右，深＝前後，高＝上下。不確定使用者給的是哪一邊時，先問清楚。
+- 依使用者要收的物品判斷盒子高度與型式（例如襪子適合高 10cm 左右的分格盒、文件適合檔案盒），必要時用 minBoxH 篩掉太矮的盒子。
+- 回答精簡：先給推薦的一個方案（件數、填滿率、總價），再用 2–4 點說明理由與注意事項，最後可提一個替代方案。不要貼整張清單，畫面上已有。
+- 給收納技巧前先呼叫 search_tips；引用時寫出出處名稱與日期（例如「出處：ESSE online，2024-03」）。資料庫查不到的建議要說明是一般原則。不要大段照抄出處文章。
+- 套組或多件裝必須整組購買，提醒使用者會多出幾件。
+- 空間太高、盒子只用到下半部時，考慮用配件增加層次：伸縮棒或伸縮層架做第二層、小型置物架墊高、層板下吊籃、門片掛勾、鐵網加掛勾掛在側壁。用 search_accessories 找實際商品；伸縮品要確認使用者的跨距落在最短與最長長度之間，並提醒耐重。
+- 大創商品的價格有些依均一價推定，提到時說明以門市標價為準。
+照片評估（使用者附上照片時）：
+- 先描述你看到的空間類型、目前的物品與擺放問題（例如雜物堆疊、空間浪費在高度、常用物放太深處）。
+- 照片無法精確量尺寸。可以用照片裡的參照物（A4 紙、寶特瓶、手掌等）粗估，但必須標明是「估計」，並請使用者用捲尺量內寬、內深、內高後再算；不要把估計值當成實測值去呼叫 plan_space，除非使用者明確同意先用估計值試算，且回答中要提醒結果僅供參考。
+- 依照片中的物品，建議該用什麼型式與高度的盒子（分格、檔案盒、附蓋、透明等），可用 search_catalog 找實際商品。
+- 照片只會在附上的那一則訊息送出；之後的對話看不到照片，必要時把觀察結果寫在回答裡。`;
+  const MAX_PHOTOS_FALLBACK = 4;
+  let photos = [], photoLimits = null;
+  function renderPhotos() {
+    const box = $('attach'); box.innerHTML = '';
+    photos.forEach((f, i) => {
+      const fig = document.createElement('figure'); const img = document.createElement('img');
+      img.src = URL.createObjectURL(f); img.alt = '要給顧問看的照片 ' + (i + 1); img.onload = () => URL.revokeObjectURL(img.src);
+      const x = document.createElement('button'); x.type = 'button'; x.textContent = '×'; x.setAttribute('aria-label', '移除照片 ' + (i + 1));
+      x.onclick = () => { photos.splice(i, 1); renderPhotos(); };
+      fig.append(img, x); box.append(fig);
+    });
+  }
+  $('photo-in').addEventListener('change', (e) => {
+    const max = photoLimits?.maxCount ?? MAX_PHOTOS_FALLBACK;
+    const types = photoLimits?.mediaTypes;
+    for (const f of e.target.files) {
+      if (photos.length >= max) { addMsg('err', `一次最多附 ${max} 張照片。`); break; }
+      if (types && !types.includes(f.type)) { addMsg('err', `不支援這種檔案格式：${esc(f.name)}，請用 JPEG、PNG 或 WebP。`); continue; }
+      if (photoLimits && f.size > photoLimits.maxInputBytes) { addMsg('err', `照片太大：${esc(f.name)}。`); continue; }
+      photos.push(f);
+    }
+    e.target.value = ''; renderPhotos();
+  });
+  let turns = [], ctl = null, sample = null;
+
+  // ---- 對話歷史（只存在這個瀏覽器）----
+  const CHAT_KEY = 'boxplan.chats', MAX_CHATS = 30;
+  const WELCOME = document.getElementById('log').innerHTML;
+  let chat = null;   // 目前的對話 {id, title, updated, msgs:[{role, content}]}
+  const chats = {
+    all() { try { return JSON.parse(localStorage.getItem(CHAT_KEY) || '[]'); } catch { return []; } },
+    save(list) { try { localStorage.setItem(CHAT_KEY, JSON.stringify(list.slice(0, MAX_CHATS))); } catch {} },
+  };
+  function persistChat() {
+    if (!chat || !chat.msgs.length) return;
+    chat.updated = Date.now();
+    chat.title = chat.title || chat.msgs.find((m) => m.role === 'user')?.content.slice(0, 40) || '未命名對話';
+    chats.save([chat, ...chats.all().filter((c) => c.id !== chat.id)]);
+    renderHistory();
+  }
+  function startChat() {
+    ctl?.abort();
+    chat = { id: 'c' + Date.now().toString(36), title: '', updated: Date.now(), msgs: [] };
+    turns = [];
+    document.getElementById('log').innerHTML = WELCOME;
+    document.getElementById('suggest').hidden = false;
+    renderHistory();
+  }
+  function openChat(id) {
+    const c = chats.all().find((x) => x.id === id); if (!c) return;
+    ctl?.abort();
+    chat = c;
+    const logEl = document.getElementById('log');
+    logEl.innerHTML = '';
+    for (const m of c.msgs) {
+      const d = document.createElement('div');
+      d.className = 'msg ' + (m.role === 'user' ? 'user' : 'ai');
+      d.innerHTML = m.role === 'user' ? esc(m.content) : md(m.content);
+      logEl.append(d);
+    }
+    logEl.scrollTop = logEl.scrollHeight;
+    turns = c.msgs.slice(-16);
+    while (turns.length && turns[0].role !== 'user') turns.shift();
+    document.getElementById('suggest').hidden = true;
+    renderHistory();
+  }
+  function renderHistory() {
+    const list = chats.all(), ul = document.getElementById('hist-list');
+    ul.innerHTML = '';
+    if (!list.length) { ul.innerHTML = '<li class="hint">還沒有對話紀錄。</li>'; return; }
+    for (const c of list) {
+      const li = document.createElement('li');
+      const open = document.createElement('button');
+      open.type = 'button'; open.className = 'open'; open.setAttribute('aria-current', String(chat?.id === c.id));
+      const d = new Date(c.updated);
+      open.textContent = c.title;
+      const when = document.createElement('span'); when.className = 'when';
+      when.textContent = `${d.getMonth() + 1}/${d.getDate()} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+      open.append(when);
+      open.onclick = () => openChat(c.id);
+      const del = document.createElement('button');
+      del.type = 'button'; del.className = 'del'; del.textContent = '刪除'; del.setAttribute('aria-label', '刪除對話：' + c.title);
+      del.onclick = () => {
+        if (del.dataset.armed !== '1') { del.dataset.armed = '1'; del.textContent = '確定刪除？'; return; }
+        chats.save(chats.all().filter((x) => x.id !== c.id));
+        if (chat?.id === c.id) startChat(); else renderHistory();
+      };
+      li.append(open, del); ul.append(li);
+    }
+  }
+  document.getElementById('hist-btn').onclick = () => {
+    const h = document.getElementById('hist'), b = document.getElementById('hist-btn');
+    h.hidden = !h.hidden; b.setAttribute('aria-expanded', String(!h.hidden)); b.classList.toggle('on', !h.hidden);
+  };
+  document.getElementById('new-chat').onclick = () => startChat();
+  const log = $('log');
+  function addMsg(cls, html) { const d = document.createElement('div'); d.className = 'msg ' + cls; d.innerHTML = html; log.append(d); log.scrollTop = log.scrollHeight; return d; }
+  function md(t) {
+    const lines = esc(t).split('\n'); let out = '', inList = false;
+    for (const raw of lines) {
+      const l = raw.replace(/\*\*(.+?)\*\*/g, '<b>$1</b>');
+      const m = /^\s*(?:[-*・]|\d+[.)、])\s+(.*)$/.exec(l);
+      if (m) { if (!inList) { out += '<ul>'; inList = true; } out += `<li>${m[1]}</li>`; continue; }
+      if (inList) { out += '</ul>'; inList = false; }
+      if (l.trim()) out += `<p>${l.replace(/^#+\s*/, '')}</p>`;
+    }
+    return out + (inList ? '</ul>' : '');
+  }
+  const ERR = {
+    not_granted: '你沒有允許這個頁面使用 Claude，顧問功能已關閉。計算與目錄仍可使用。',
+    images_unavailable: '這個檢視無法傳送照片，請改用文字描述。', image_rejected: '照片無法讀取或太大，請換一張（JPEG、PNG、WebP）。',
+    sampling_disabled: '這個帳號目前無法使用 Claude。', rate_limited: '使用太頻繁或已達用量上限，請稍後再試。',
+    session_expired: '登入已過期，請重新登入 claude.ai。', refused: 'Claude 無法回答這個問題，換個說法試試。',
+    prompt_too_large: '對話太長了，請重新整理頁面開始新對話。', tools_unavailable: '這個檢視無法讓顧問操作計算工具。',
+  };
+  function brief(s) {
+    return { 方案: s.label, 地面填滿: Math.round(s.floorFill * 100) + '%', 體積: Math.round(s.volumeFill * 100) + '%', 件數: s.count,
+      總價: s.priceUnknown ? '部分價格未知' : s.price, 盒子: s.items.map((i) => `${i.qty}×${i.brand} ${i.name}（${i.size.join('×')}cm, id ${i.id}）`),
+      整組購買: s.shopping.filter((b) => b.kind === 'set').map((b) => `${b.name} ${b.qty} 組 @${b.unitPrice}，用到 ${b.parts.map((p) => p.need).join('+')} 件／每組 ${BY_ID.get(b.parts[0].id).set.total} 件`) };
+  }
+  const TOOLS = [
+    { name: 'plan_space',
+      description: '依空間內尺寸計算收納盒排列組合，並把結果顯示在網頁上。回傳最多 6 個方案（填滿率、件數、總價、用到的盒子）。',
+      inputSchema: { type: 'object', properties: {
+        name: { type: 'string', description: '空間名稱，例如「衣櫃抽屜」' },
+        w: { type: 'number', description: '內寬 cm' }, d: { type: 'number', description: '內深 cm' }, h: { type: 'number', description: '內高 cm' },
+        mode: { type: 'string', enum: ['fill', 'count'], description: 'fill＝填滿率優先，count＝件數少優先' },
+        budget: { type: 'number', description: '預算上限 NT$，不限就省略' },
+        brands: { type: 'array', items: { type: 'string', enum: BRANDS } },
+        minBoxH: { type: 'number', description: '盒子高度下限 cm' },
+        gap: { type: 'number', description: '每邊間隙 mm，預設 5' },
+        allowStack: { type: 'boolean', description: '是否允許堆疊（櫃內、洗手台下等較高空間）' } }, required: ['w', 'd', 'h'] },
+      execute(input) {
+        const w = Number(input.w), d = Number(input.d), h = Number(input.h);
+        if (!(w > 0 && d > 0 && h > 0)) throw new Error('w、d、h 必須是正數（cm）');
+        addMsg('tool', `計算 ${w}×${d}×${h} cm 的排法…`);
+        $('sp-name').value = String(input.name || '顧問建議的空間'); $('sp-w').value = w; $('sp-d').value = d; $('sp-h').value = h;
+        setOpts({ mode: input.mode, budget: Number(input.budget) || null, brands: input.brands, minBoxH: Number(input.minBoxH) || null,
+          gap: input.gap != null ? Number(input.gap) : null, allowStack: input.allowStack });
+        isExample = false;
+        const r = run();
+        if (!r || !r.results.length) return { 結果: r?.note || '沒有放得下的組合' };
+        return { 空間: `${w}×${d}×${h}cm`, 方案: r.results.map(brief) };
+      } },
+    { name: 'search_catalog',
+      description: '在商品資料庫搜尋收納盒。可依關鍵字（品名、系列、備註）、品牌、尺寸上下限篩選。回傳最多 25 筆：id、品名、外寸、內寸、價格、備註摘要。寬深可互換。',
+      inputSchema: { type: 'object', properties: {
+        keyword: { type: 'string' }, brand: { type: 'string', enum: BRANDS },
+        maxW: { type: 'number' }, maxD: { type: 'number' }, maxH: { type: 'number' }, minH: { type: 'number' },
+        maxPrice: { type: 'number' } } },
+      execute(input) {
+        const kw = String(input.keyword || '').toLowerCase();
+        const f = (v) => (v == null || v === '' ? null : Number(v));
+        const mw = f(input.maxW), mdp = f(input.maxD), mh = f(input.maxH), nh = f(input.minH), mp = f(input.maxPrice);
+        addMsg('tool', `搜尋商品${kw ? '「' + esc(kw) + '」' : ''}…`);
+        const fits = (b) => { if (mw == null && mdp == null) return true; const W = mw ?? 999, D = mdp ?? 999;
+          return (b.w <= W && b.d <= D) || (b.d <= W && b.w <= D); };
+        const list = BOXES.filter((b) => (!input.brand || b.brand === input.brand)
+          && (!kw || kw.split(/\s+/).every((k) => (b.name + b.series + b.notes).toLowerCase().includes(k)))
+          && fits(b) && (mh == null || b.h <= mh) && (nh == null || b.h >= nh) && (mp == null || (b.price ?? Infinity) <= mp));
+        return { 符合: list.length, 商品: list.slice(0, 25).map((b) => ({ id: b.id, 品牌: b.brand, 品名: b.name, 外寸: `${b.w}×${b.d}×${b.h}`,
+          內寸: b.iw ? `${b.iw}×${b.id_}×${b.ih}` : null, 價格: b.set ? `整組 ${b.set.price}（${b.set.total} 件）` : b.price,
+          可堆疊: b.stackable, 附蓋: b.hasLid, 備註: b.notes.replace(/^SET:[^;]*;/, '').slice(0, 100) })) };
+      } },
+    { name: 'search_tips',
+      description: '搜尋收納技巧資料庫（品牌官方提案與台日居家媒體文章的摘要）。可依空間、關鍵字、用到的配件篩選。回傳最多 8 條：標題、摘要、步驟、出處名稱、類型、日期、網址。',
+      inputSchema: { type: 'object', properties: {
+        space: { type: 'string', enum: SPACES }, keyword: { type: 'string' }, accessory: { type: 'string', enum: ACC_CATS } } },
+      execute(input) {
+        addMsg('tool', `查收納技巧${input.space ? '：' + esc(input.space) : ''}${input.accessory ? '（' + esc(input.accessory) + '）' : ''}…`);
+        let list = filterTips({ space: input.space, keyword: input.keyword, accessory: input.accessory });
+        if (!list.length && input.space && input.keyword) list = filterTips({ space: input.space, accessory: input.accessory });
+        return { 符合: list.length, 技巧: list.slice(0, 8).map((t) => ({ id: t.id, 空間: t.space, 標題: t.title, 摘要: t.tip, 步驟: t.steps,
+          配件: t.accs, 出處: t.source_name, 類型: t.source_type, 日期: t.published_date || null, 網址: t.url })) };
+      } },
+    { name: 'search_accessories',
+      description: '搜尋收納配件（伸縮棒、伸縮層架、鐵網、網片配件、抽屜隔板、小型置物架、掛勾、吊掛收納）。span 為要撐的跨距 cm：伸縮品只回傳撐得到的。回傳最多 20 筆：id、品名、類別、尺寸或伸縮範圍、耐重、安裝方式、價格、官方建議用途。',
+      inputSchema: { type: 'object', properties: {
+        category: { type: 'string', enum: ACC_CATS }, keyword: { type: 'string' }, brand: { type: 'string', enum: BRANDS },
+        span: { type: 'number', description: '要撐的跨距 cm；填了只回傳伸縮範圍涵蓋此跨距的伸縮品' }, minLoad: { type: 'number', description: '耐重下限 kg' } } },
+      execute(input) {
+        addMsg('tool', `搜尋配件${input.category ? '：' + esc(input.category) : ''}${input.span ? `（跨距 ${Number(input.span)} cm）` : ''}…`);
+        const list = filterAcc({ keyword: input.keyword, category: input.category, brand: input.brand, span: Number(input.span) || null, minLoad: Number(input.minLoad) || null });
+        return { 符合: list.length, 配件: list.slice(0, 20).map((a) => ({ id: a.id, 品牌: BRAND_ZH[a.brand], 品名: a.name, 類別: a.category,
+          尺寸: accSize(a), 線徑或棒徑cm: a.dia, 耐重kg: a.load, 安裝: a.mount, 價格: accPrice(a), 官方建議用途: a.usage || null, 備註: a.notes.slice(0, 100) })) };
+      } },
+  ];
+  const SUGGEST = ['衣櫃抽屜內寬 57、深 30、高 15，要放襪子和內衣', '層架一格 38×30×25，想放 A4 文件', '洗手台下 80×50×55，預算 1500，放清潔用品'];
+  SUGGEST.forEach((t) => $('suggest').append(chip(t, () => { $('chat-in').value = t; $('chat-in').focus(); })));
+
+  function setBusy(b) { $('chat-send').disabled = b; $('chat-stop').hidden = !b; $('chat-state').textContent = b ? '思考中…' : '使用你自己的 Claude 額度'; }
+  $('chat-stop').onclick = () => ctl?.abort();
+  $('chat-in').addEventListener('keydown', (e) => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) $('chat-form').requestSubmit(); });
+  $('chat-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const typed = $('chat-in').value.trim();
+    if (!typed && !photos.length) return;
+    if (!sample) { addMsg('err', '這個檢視無法連到 Claude。計算與商品目錄仍可使用。'); return; }
+    const sent = photos; photos = []; renderPhotos();
+    const text = (typed || '請評估這個空間的收納狀況並給建議。') + (sent.length ? `\n（附上 ${sent.length} 張照片）` : '');
+    $('chat-in').value = ''; $('suggest').hidden = true;
+    const um = addMsg('user', esc(text));
+    if (sent.length) {
+      const th = document.createElement('div'); th.className = 'thumbs';
+      sent.forEach((f) => { const img = document.createElement('img'); img.src = URL.createObjectURL(f); img.alt = '已送出的照片'; th.append(img); });
+      um.append(th);
+    }
+    turns.push({ role: 'user', content: text });
+    chat.msgs.push({ role: 'user', content: text }); persistChat();
+    while (turns.length > 16) turns.shift();
+    while (turns.length && turns[0].role !== 'user') turns.shift();
+    const ctx = last ? `（網頁目前顯示的空間：${last.space.name} ${last.space.w}×${last.space.d}×${last.space.h}cm）` : '';
+    const bubble = addMsg('ai', '<p class="hint">思考中…</p>');
+    ctl = new AbortController(); setBusy(true);
+    try {
+      const { text: out, truncated } = await sample([{ role: 'user', content: RULES + '\n' + ctx }, ...turns], {
+        signal: ctl.signal, tools: TOOLS, ...(sent.length ? { images: sent } : {}),
+        onText: ({ text: t }) => { bubble.innerHTML = md(t); log.scrollTop = log.scrollHeight; },
+      });
+      bubble.innerHTML = md(out) + (truncated ? '<p class="hint">回答被截斷，可以請它說短一點。</p>' : '');
+      turns.push({ role: 'assistant', content: out });
+      chat.msgs.push({ role: 'assistant', content: out }); persistChat();
+    } catch (err) {
+      if (err.text) bubble.innerHTML = md(err.text); else bubble.remove();
+      if (err.code !== 'cancelled') addMsg('err', esc(ERR[err.code] || '連線中斷，請再送一次。'));
+      if (err.code === 'not_granted' || err.code === 'sampling_disabled') { $('chat-send').disabled = true; sample = null; }
+      turns.pop();
+      if (err.text) { chat.msgs.push({ role: 'assistant', content: err.text + '\n（回答中斷）' }); persistChat(); }
+    } finally { setBusy(false); if (!sample) $('chat-send').disabled = true; }
+  });
+  setBusy(false);
+  startChat();
+  (async () => {
+    try { sample = window.claude ? await window.claude.use('sample') : null; } catch { sample = null; }
+    if (!sample) { $('chat-state').textContent = '在 claude.ai 開啟此頁才能使用顧問'; $('chat-send').disabled = true; return; }
+    photoLimits = (await sample.limits().catch(() => null))?.images || null;
+    $('photo-btn').hidden = !photoLimits;
+    if (photoLimits) $('photo-in').accept = photoLimits.mediaTypes.join(',');
+  })();
+
+  run();
+})();
+</script>

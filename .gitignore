@@ -1,0 +1,21 @@
+# Python
+__pycache__/
+*.pyc
+
+# Node
+node_modules/
+
+# 測試或二分法產生的暫存試算表
+收納盒資料庫_v*test.xlsx
+收納盒資料庫_vbisect.xlsx
+
+# Office 開檔時的鎖定檔
+~$*
+
+# Claude Code 個人設定（launch.json 保留）
+.claude/settings.local.json
+
+# 作業系統
+Thumbs.db
+desktop.ini
+.DS_Store
